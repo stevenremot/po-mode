@@ -146,6 +146,26 @@ Content-Type into a Mule coding system.")
              (if (re-search-forward charset-regexp nil t)
                  (match-string 1))))))
 
+;; Handle missing 'with-temp-buffer' function.
+(eval-and-compile
+  (if (fboundp 'with-temp-buffer)
+      (fset 'po-with-temp-buffer (symbol-function 'with-temp-buffer))
+
+    (defmacro po-with-temp-buffer (&rest forms)
+      "Create a temporary buffer, and evaluate FORMS there like 'progn'."
+      (let ((curr-buffer (make-symbol "curr-buffer"))
+            (temp-buffer (make-symbol "temp-buffer")))
+        `(let ((,curr-buffer (current-buffer))
+               (,temp-buffer (get-buffer-create
+                              (generate-new-buffer-name " *po-temp*"))))
+           (unwind-protect
+               (progn
+                 (set-buffer ,temp-buffer)
+                 ,@forms)
+             (set-buffer ,curr-buffer)
+             (and (buffer-name ,temp-buffer)
+                  (kill-buffer ,temp-buffer))))))))
+
 ;;;###autoload (autoload 'po-find-file-coding-system "po-compat")
 
 (defun po-find-file-coding-system-guts (operation filename)

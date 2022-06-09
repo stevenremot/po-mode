@@ -500,26 +500,6 @@ or remove the -m if you are not using the GNU version of 'uuencode'."
       "Return string of text matched by last search."
       (po-buffer-substring (match-beginning number) (match-end number)))))
 
-;; Handle missing 'with-temp-buffer' function.
-(eval-and-compile
-  (if (fboundp 'with-temp-buffer)
-      (fset 'po-with-temp-buffer (symbol-function 'with-temp-buffer))
-
-    (defmacro po-with-temp-buffer (&rest forms)
-      "Create a temporary buffer, and evaluate FORMS there like 'progn'."
-      (let ((curr-buffer (make-symbol "curr-buffer"))
-            (temp-buffer (make-symbol "temp-buffer")))
-        `(let ((,curr-buffer (current-buffer))
-               (,temp-buffer (get-buffer-create
-                              (generate-new-buffer-name " *po-temp*"))))
-           (unwind-protect
-               (progn
-                 (set-buffer ,temp-buffer)
-                 ,@forms)
-             (set-buffer ,curr-buffer)
-             (and (buffer-name ,temp-buffer)
-                  (kill-buffer ,temp-buffer))))))))
-
 ;; Handle missing 'kill-new' function.
 (eval-and-compile
   (if (fboundp 'kill-new)
